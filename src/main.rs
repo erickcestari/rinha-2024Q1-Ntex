@@ -1,3 +1,4 @@
+mod repositories;
 mod services;
 
 use ntex::web;
