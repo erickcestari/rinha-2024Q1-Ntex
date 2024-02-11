@@ -1,7 +1,6 @@
+use chrono::NaiveDateTime;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
-use dotenv::dotenv;
-use std::env;
 
 mod schema {
     use diesel::table;
@@ -12,11 +11,15 @@ mod schema {
             valor -> Integer,
             tipo -> Char,
             descricao -> VarChar,
+            cliente_id -> Integer,
+            realizada_em -> Timestamp,
         }
     }
 }
 
 use schema::transacao;
+
+use self::schema::transacao::realizada_em;
 
 #[derive(Debug, Insertable)]
 #[table_name = "transacao"]
@@ -24,32 +27,30 @@ struct NewTransacao<'a> {
     valor: &'a i32,
     tipo: &'a str,
     descricao: &'a str,
+    cliente_id: &'a i32,
+    realizada_em: &'a NaiveDateTime,
 }
 
-fn establish_connection() -> PgConnection {
-    dotenv().ok();
-
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url).expect(&format!("Error connecting to {}", database_url))
-}
-
-fn insere_transicao(
+pub fn insere_transicao(
     conn: &mut PgConnection,
     valor: i32,
-    tipo: &str,
+    tipo: char,
     descricao: &str,
-) -> QueryResult<schema::transacao::SqlType> {
+    cliente_id: &i32,
+    timestamp: &NaiveDateTime,
+) -> QueryResult<usize> {
     // Create insertion model
     let new_transacao = NewTransacao {
         valor: &valor,
-        tipo: &tipo,
+        tipo: &tipo.to_string(),
         descricao: &descricao,
+        cliente_id,
+        realizada_em: timestamp,
     };
 
-    // normal diesel operations
-    diesel::insert_into(transacao::table)
+    let result = diesel::insert_into(transacao::table)
         .values(&new_transacao)
         .execute(conn)?;
 
-    Ok(transacao)
+    Ok(result)
 }
