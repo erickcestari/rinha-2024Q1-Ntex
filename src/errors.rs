@@ -11,6 +11,9 @@ pub enum HttpError {
 
     #[display("timeout")]
     Timeout,
+
+    #[display("Unprocessable Entity")]
+    UnprocessableEntity,
 }
 
 impl web::error::WebResponseError for HttpError {
@@ -25,6 +28,7 @@ impl web::error::WebResponseError for HttpError {
             HttpError::InternalError => http::StatusCode::INTERNAL_SERVER_ERROR,
             HttpError::BadClientData => http::StatusCode::BAD_REQUEST,
             HttpError::Timeout => http::StatusCode::GATEWAY_TIMEOUT,
+            HttpError::UnprocessableEntity => http::StatusCode::UNPROCESSABLE_ENTITY,
         }
     }
 }

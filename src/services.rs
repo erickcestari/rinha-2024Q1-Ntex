@@ -1,12 +1,11 @@
-use chrono::NaiveDateTime;
 use ntex::web::types::State;
 use sqlx::PgPool;
 use std::result::Result;
 
-use crate::models::NewTransacao;
+use crate::models::{Cliente, NewTransacao};
 
 pub async fn insere_transacao(
-    conn: State<PgPool>,
+    conn: &State<PgPool>,
     new_transacao: NewTransacao,
 ) -> Result<u64, sqlx::Error> {
     let result = sqlx::query(
@@ -24,4 +23,29 @@ pub async fn insere_transacao(
     .await?;
 
     Ok(result.rows_affected())
+}
+
+pub async fn get_cliente(conn: &State<PgPool>, id: i32) -> Result<Cliente, sqlx::Error> {
+    let cliente = sqlx::query_as::<_, Cliente>(
+        r#"
+        SELECT * FROM clientes WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_one(conn.get_ref())
+    .await?;
+
+    Ok(cliente)
+}
+
+pub async fn update_cliente_saldo(conn: &State<PgPool>, id: i32, saldo: i32) {
+    let _ = sqlx::query(
+        r#"
+        UPDATE clientes SET saldo = $1 WHERE id = $2
+        "#,
+    )
+    .bind(saldo)
+    .bind(id)
+    .execute(conn.get_ref())
+    .await;
 }
