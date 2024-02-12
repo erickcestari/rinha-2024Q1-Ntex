@@ -2,7 +2,7 @@ use ntex::web::types::State;
 use sqlx::PgPool;
 use std::result::Result;
 
-use crate::models::{Cliente, NewTransacao};
+use crate::models::{Cliente, NewTransacao, Transacao};
 
 pub async fn insere_transacao(
     conn: &State<PgPool>,
@@ -17,7 +17,7 @@ pub async fn insere_transacao(
     .bind(&new_transacao.valor)
     .bind(&new_transacao.tipo)
     .bind(&new_transacao.descricao)
-    .bind(new_transacao.cliente_id as i32)
+    .bind(new_transacao.cliente_id)
     .bind(&new_transacao.realizada_em)
     .execute(conn.get_ref())
     .await?;
@@ -48,4 +48,19 @@ pub async fn update_cliente_saldo(conn: &State<PgPool>, id: i32, saldo: i32) {
     .bind(id)
     .execute(conn.get_ref())
     .await;
+}
+
+pub async fn get_transacoes(conn: &State<PgPool>, id: i32) -> Result<Vec<Transacao>, sqlx::Error> {
+    let transacoes = sqlx::query_as!(
+        Transacao,
+        r#"
+        SELECT tipo, descricao, valor, realizada_em FROM transacoes WHERE cliente_id = $1
+        "#,
+        id
+    )
+    .fetch_all(conn.get_ref())
+    .await
+    .expect("Erro ao inserir");
+
+    Ok(transacoes)
 }

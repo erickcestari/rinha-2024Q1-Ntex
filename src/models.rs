@@ -7,7 +7,7 @@ pub struct NewTransacao {
     pub valor: i32,
     pub tipo: String,
     pub descricao: String,
-    pub cliente_id: u32,
+    pub cliente_id: i32,
     pub realizada_em: NaiveDateTime,
 }
 
@@ -41,4 +41,27 @@ impl<'r> FromRow<'r, PgRow> for Cliente {
             saldo: row.try_get("saldo")?,
         })
     }
+}
+
+use chrono::{DateTime, Utc};
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+pub struct Saldo {
+    pub total: i32,
+    pub data_extrato: NaiveDateTime,
+    pub limite: i32,
+}
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+pub struct Transacao {
+    pub valor: i32,
+    pub tipo: String,
+    pub descricao: String,
+    pub realizada_em: NaiveDateTime,
+}
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+pub struct ClienteData {
+    pub saldo: Saldo,
+    pub ultimas_transacoes: Vec<Transacao>,
 }
