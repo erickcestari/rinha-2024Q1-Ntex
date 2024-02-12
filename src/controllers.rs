@@ -43,9 +43,9 @@ pub async fn create_transaction(
         valor: transacao.valor,
     };
 
-    insere_transacao(&pool, new_transacao)
-        .await
-        .expect("Error ao inserir transação");
+    if let Err(_) = insere_transacao(&pool, new_transacao).await {
+        return Err(HttpError::BadClientData.into());
+    }
 
     update_cliente_saldo(&pool, cliente_id as i32, saldo).await;
 
