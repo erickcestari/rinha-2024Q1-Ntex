@@ -3,7 +3,7 @@ mod errors;
 mod models;
 mod services;
 
-use controllers::create_transaction;
+use controllers::{create_transaction, get_extrato};
 use dotenv::dotenv;
 use ntex::web;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
@@ -26,6 +26,7 @@ async fn main() -> std::io::Result<()> {
         web::App::new()
             .state(pool.clone())
             .service(create_transaction)
+            .service(get_extrato)
     };
 
     web::HttpServer::new(app_factory)
