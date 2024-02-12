@@ -1,11 +1,10 @@
 version: '3.9'
 
 services:
-  postgres:
+  db:
     image: postgres:latest
-    hostname: db
     environment:
-      - POSTGRES_PASSWORD=2024
+      - POSTGRES_PASSWORD=123456
       - POSTGRES_USER=admin
       - POSTGRES_DB=rinhabackenddb
     ports:

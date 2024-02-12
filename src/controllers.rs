@@ -1,5 +1,5 @@
-use crate::services::insere_transicao;
-use chrono::{Local, NaiveDate};
+use crate::{errors::HttpError, models::NewTransacao, services::insere_transacao};
+use chrono::Local;
 use ntex::web;
 use serde::Deserialize;
 
@@ -12,26 +12,29 @@ struct Transacao {
     descricao: String,
 }
 
-#[web::post("/clientes/{id}/transacoes")]
+#[web::post("/clientes/{cliente_id}/transacoes")]
 pub async fn create_transaction(
     pool: web::types::State<PgPool>,
-    path: web::types::Path<i32>,
+    path: web::types::Path<u32>,
     transacao: web::types::Json<Transacao>,
 ) -> Result<String, web::Error> {
-    let id = path.into_inner();
-    let mut conn = pool.get().expect("couldn't get db connection from pool");
+    let cliente_id = path.into_inner();
     let current_date = Local::now().naive_local();
 
-    insere_transicao(
-        &mut conn,
-        transacao.valor,
-        transacao.tipo,
-        &transacao.descricao,
-        &id,
-        &current_date,
-    );
-    Ok(format!(
-        "user_id {} transiction {}!",
-        id, transacao.descricao
-    ))
+    if cliente_id <= 0 || cliente_id > 5 {
+        return Err(HttpError::BadClientData.into());
+    }
+    let new_transacao = NewTransacao {
+        cliente_id,
+        descricao: transacao.descricao.to_string(),
+        tipo: transacao.tipo.to_string(),
+        realizada_em: current_date,
+        valor: transacao.valor,
+    };
+
+    insere_transacao(pool, new_transacao)
+        .await
+        .expect("Error ao inserir transação");
+
+    Ok(format!("user_id {} transiction complete", cliente_id))
 }

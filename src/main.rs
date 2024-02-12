@@ -1,25 +1,27 @@
 mod controllers;
+mod errors;
+mod models;
 mod services;
 
 use controllers::create_transaction;
-use diesel::r2d2::ConnectionManager;
 use dotenv::dotenv;
 use ntex::web;
-use std::{env, sync::Arc};
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use std::env;
 
-pub type PgPool = diesel::r2d2::Pool<ConnectionManager<diesel::PgConnection>>;
+pub type PgPool = Pool<Postgres>;
 
 #[ntex::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
 
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let manager = ConnectionManager::<diesel::PgConnection>::new(db_url);
-    let pool = diesel::r2d2::Pool::builder()
-        .build(manager)
-        .expect("Failed to create pool.");
+    let pool = PgPoolOptions::new()
+        .connect(&db_url)
+        .await
+        .expect("Failed to connect to Postgres.");
 
-    let pool = Arc::new(pool);
+    //let pool = Arc::new(pool);
     let app_factory = move || {
         web::App::new()
             .state(pool.clone())
