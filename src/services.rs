@@ -1,56 +1,27 @@
 use chrono::NaiveDateTime;
-use diesel::pg::PgConnection;
-use diesel::prelude::*;
+use ntex::web::types::State;
+use sqlx::PgPool;
+use std::result::Result;
 
-mod schema {
-    use diesel::table;
+use crate::models::NewTransacao;
 
-    table! {
-        transacao (id) {
-            id -> Integer,
-            valor -> Integer,
-            tipo -> Char,
-            descricao -> VarChar,
-            cliente_id -> Integer,
-            realizada_em -> Timestamp,
-        }
-    }
-}
+pub async fn insere_transacao(
+    conn: State<PgPool>,
+    new_transacao: NewTransacao,
+) -> Result<u64, sqlx::Error> {
+    let result = sqlx::query(
+        r#"
+        INSERT INTO transacoes (valor, tipo, descricao, cliente_id, realizada_em)
+        VALUES ($1, $2, $3, $4, $5)
+        "#,
+    )
+    .bind(&new_transacao.valor)
+    .bind(&new_transacao.tipo)
+    .bind(&new_transacao.descricao)
+    .bind(new_transacao.cliente_id as i32)
+    .bind(&new_transacao.realizada_em)
+    .execute(conn.get_ref())
+    .await?;
 
-use schema::transacao;
-
-use self::schema::transacao::realizada_em;
-
-#[derive(Debug, Insertable)]
-#[table_name = "transacao"]
-struct NewTransacao<'a> {
-    valor: &'a i32,
-    tipo: &'a str,
-    descricao: &'a str,
-    cliente_id: &'a i32,
-    realizada_em: &'a NaiveDateTime,
-}
-
-pub fn insere_transicao(
-    conn: &mut PgConnection,
-    valor: i32,
-    tipo: char,
-    descricao: &str,
-    cliente_id: &i32,
-    timestamp: &NaiveDateTime,
-) -> QueryResult<usize> {
-    // Create insertion model
-    let new_transacao = NewTransacao {
-        valor: &valor,
-        tipo: &tipo.to_string(),
-        descricao: &descricao,
-        cliente_id,
-        realizada_em: timestamp,
-    };
-
-    let result = diesel::insert_into(transacao::table)
-        .values(&new_transacao)
-        .execute(conn)?;
-
-    Ok(result)
+    Ok(result.rows_affected())
 }
