@@ -59,14 +59,16 @@ pub async fn create_transaction(
         .expect("Erro ao pegar as informações do cliente");
 
     let saldo = match transacao.tipo {
-        'd' => cliente.saldo - transacao.valor,
+        'd' => {
+            let result = cliente.saldo - transacao.valor;
+            if result < -cliente.limite {
+                return Err(HttpError::UnprocessableEntity.into());
+            }
+            result
+        }
         'c' => cliente.saldo + transacao.valor,
         _ => return Err(HttpError::BadClientData.into()),
     };
-
-    if saldo < -cliente.limite {
-        return Err(HttpError::UnprocessableEntity.into());
-    }
 
     let new_transacao = NewTransacao {
         cliente_id,
