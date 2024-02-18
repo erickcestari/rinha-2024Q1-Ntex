@@ -6,8 +6,8 @@ services:
     hostname: api01
     environment:
       - DATABASE_URL=postgres://admin:123456@db:5432/rinhabackenddb
-    ports:
-      - "3001:8000"
+      - PORT=8000
+    network_mode: host
     depends_on:
       - db
     deploy:
@@ -18,9 +18,10 @@ services:
 
   api02:
     <<: *api
+    environment:
+      - DATABASE_URL=postgres://admin:123456@db:5432/rinhabackenddb
+      - PORT=8001
     hostname: api02
-    ports:
-      - "3002:8000"
 
   nginx:
     image: nginx:latest
@@ -29,6 +30,7 @@ services:
     depends_on:
       - api01
       - api02
+    network_mode: host
     ports:
       - "9999:9999"
     deploy:
@@ -40,6 +42,7 @@ services:
   db:
     image: postgres:latest
     hostname: db
+    network_mode: host
     environment:
       - POSTGRES_PASSWORD=123456
       - POSTGRES_USER=admin
