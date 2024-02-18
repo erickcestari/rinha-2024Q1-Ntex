@@ -54,6 +54,14 @@ pub async fn create_transaction(
         return Err(HttpError::BadClientData.into());
     }
 
+    if transacao.descricao.len() > 10 || transacao.descricao.is_empty() {
+        return Err(HttpError::BadClientData.into());
+    }
+
+    if transacao.valor < 1 {
+        return Err(HttpError::BadClientData.into());
+    }
+
     let cliente = get_cliente(&pool, cliente_id)
         .await
         .expect("Erro ao pegar as informações do cliente");
