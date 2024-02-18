@@ -17,7 +17,7 @@ pub async fn get_extrato(
     let current_date = Local::now().naive_local();
 
     if cliente_id <= 0 || cliente_id > 5 {
-        return Err(HttpError::BadClientData.into());
+        return Err(HttpError::NotFound.into());
     }
 
     let cliente = get_cliente(&pool, cliente_id)
@@ -51,7 +51,7 @@ pub async fn create_transaction(
     let current_date = Local::now().naive_local();
 
     if cliente_id <= 0 || cliente_id > 5 {
-        return Err(HttpError::BadClientData.into());
+        return Err(HttpError::NotFound.into());
     }
 
     if transacao.descricao.len() > 10 || transacao.descricao.is_empty() {
