@@ -1,8 +1,25 @@
 version: '3.9'
 
 services:
+  api01:
+    build: .
+    environment:
+      - DATABASE_URL=postgres://admin:123456@db:5432/rinhabackenddb
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    deploy:
+      resources:
+        limits:
+          cpus: "0.15"
+          memory: "50mb"
+    networks:
+      - rinha-backend
+
   db:
     image: postgres:latest
+    hostname: db
     environment:
       - POSTGRES_PASSWORD=123456
       - POSTGRES_USER=admin
@@ -11,3 +28,8 @@ services:
       - "5432:5432"
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - rinha-backend
+
+networks:
+  rinha-backend:

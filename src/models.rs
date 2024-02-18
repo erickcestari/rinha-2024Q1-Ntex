@@ -24,26 +24,13 @@ pub struct UpdatedClient {
     pub saldo: i32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, FromRow)]
 pub struct Cliente {
     pub id: i32,
     pub nome: String,
     pub limite: i32,
     pub saldo: i32,
 }
-
-impl<'r> FromRow<'r, PgRow> for Cliente {
-    fn from_row(row: &'r PgRow) -> Result<Self, sqlx::Error> {
-        Ok(Self {
-            id: row.try_get("id")?,
-            nome: row.try_get("nome")?,
-            limite: row.try_get("limite")?,
-            saldo: row.try_get("saldo")?,
-        })
-    }
-}
-
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct Saldo {
@@ -52,7 +39,7 @@ pub struct Saldo {
     pub limite: i32,
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, FromRow)]
 pub struct Transacao {
     pub valor: i32,
     pub tipo: String,
