@@ -54,11 +54,7 @@ pub async fn create_transaction(
         return Err(HttpError::NotFound.into());
     }
 
-    if transacao.descricao.len() > 10 || transacao.descricao.is_empty() {
-        return Err(HttpError::BadClientData.into());
-    }
-
-    if transacao.valor < 1 {
+    if transacao.descricao.len() > 10 || transacao.descricao.is_empty() || transacao.valor < 1 {
         return Err(HttpError::BadClientData.into());
     }
 
