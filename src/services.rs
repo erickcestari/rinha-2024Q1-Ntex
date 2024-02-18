@@ -53,7 +53,7 @@ pub async fn update_cliente_saldo(conn: &State<PgPool>, id: i32, saldo: i32) {
 pub async fn get_transacoes(conn: &State<PgPool>, id: i32) -> Result<Vec<Transacao>, sqlx::Error> {
     let transacoes = sqlx::query_as::<_, Transacao>(
         r#"
-        SELECT tipo, descricao, valor, realizada_em FROM transacoes WHERE cliente_id = $1
+        SELECT tipo, descricao, valor, realizada_em FROM transacoes WHERE cliente_id = $1 ORDER BY realizada_em DESC LIMIT 10
         "#,
     )
     .bind(id)
