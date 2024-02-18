@@ -1,12 +1,13 @@
 version: '3.9'
 
 services:
-  api01:
+  api01: &api
     build: .
+    hostname: api01
     environment:
       - DATABASE_URL=postgres://admin:123456@db:5432/rinhabackenddb
     ports:
-      - "8000:8000"
+      - "3001:8000"
     depends_on:
       - db
     deploy:
@@ -14,8 +15,27 @@ services:
         limits:
           cpus: "0.15"
           memory: "50mb"
-    networks:
-      - rinha-backend
+
+  api02:
+    <<: *api
+    hostname: api02
+    ports:
+      - "3002:8000"
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api01
+      - api02
+    ports:
+      - "9999:9999"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: "20mb"
 
   db:
     image: postgres:latest
@@ -28,8 +48,8 @@ services:
       - "5432:5432"
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - rinha-backend
 
 networks:
-  rinha-backend:
+  default:
+    driver: bridge
+    name: rinha-nginx-2024q1
