@@ -78,10 +78,8 @@ pub async fn create_transaction(
     };
 
     if let Err(_) = insere_transacao(&pool, new_transacao).await {
-        return Err(HttpError::BadClientData.into());
+        return Err(HttpError::UnprocessableEntity.into());
     }
 
-    let udpated_client = UpdatedClient { limite, saldo };
-
-    Ok(web::HttpResponse::Ok().json(&udpated_client))
+    Ok(web::HttpResponse::Ok().json(&UpdatedClient { limite, saldo }))
 }
