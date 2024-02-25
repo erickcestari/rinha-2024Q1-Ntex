@@ -41,7 +41,7 @@ pub async fn get_cliente(conn: &State<PgPool>, id: i32) -> Result<Cliente, sqlx:
 pub async fn update_cliente_saldo(conn: &State<PgPool>, id: i32, saldo: i32) {
     let _ = sqlx::query(
         r#"
-        UPDATE clientes SET saldo = saldo + $1 WHERE user_id = $2;
+        UPDATE clientes SET saldo = saldo + $1 WHERE id = $2;
         "#,
     )
     .bind(saldo)
