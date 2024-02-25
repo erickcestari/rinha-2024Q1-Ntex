@@ -62,15 +62,15 @@ pub async fn create_transaction(
         .await
         .expect("Erro ao pegar as informações do cliente");
 
-    let saldo = match transacao.tipo {
+    let transacao_valor = match transacao.tipo {
         'd' => {
             let result = cliente.saldo - transacao.valor;
             if result < -cliente.limite {
                 return Err(HttpError::UnprocessableEntity.into());
             }
-            result
+            -transacao.valor
         }
-        'c' => cliente.saldo + transacao.valor,
+        'c' => transacao.valor,
         _ => return Err(HttpError::BadClientData.into()),
     };
 
@@ -86,11 +86,11 @@ pub async fn create_transaction(
         return Err(HttpError::BadClientData.into());
     }
 
-    update_cliente_saldo(&pool, cliente_id, saldo).await;
+    update_cliente_saldo(&pool, cliente_id, transacao_valor).await;
 
     let udpated_client = UpdatedClient {
         limite: cliente.limite,
-        saldo,
+        saldo: cliente.saldo + transacao_valor,
     };
 
     Ok(web::HttpResponse::Ok().json(&udpated_client))
