@@ -28,7 +28,7 @@ pub async fn insere_transacao(
 pub async fn get_cliente(conn: &State<PgPool>, id: i32) -> Result<Cliente, sqlx::Error> {
     let cliente = sqlx::query_as::<_, Cliente>(
         r#"
-        SELECT * FROM clientes WHERE id = $1
+        SELECT * FROM clientes WHERE id = $1 FOR UPDATE; 
         "#,
     )
     .bind(id)
