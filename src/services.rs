@@ -28,7 +28,7 @@ pub async fn insere_transacao(
 pub async fn get_cliente(conn: &State<PgPool>, id: i32) -> Result<Cliente, sqlx::Error> {
     let cliente = sqlx::query_as::<_, Cliente>(
         r#"
-        SELECT * FROM clientes WHERE id = $1
+        SELECT * FROM clientes WHERE id = $1; 
         "#,
     )
     .bind(id)
@@ -38,22 +38,41 @@ pub async fn get_cliente(conn: &State<PgPool>, id: i32) -> Result<Cliente, sqlx:
     Ok(cliente)
 }
 
-pub async fn update_cliente_saldo(conn: &State<PgPool>, id: i32, saldo: i32) {
-    let _ = sqlx::query(
+pub async fn update_cliente_saldo(
+    conn: &State<PgPool>,
+    id: i32,
+    saldo: i32,
+) -> Result<(i32, i32), sqlx::Error> {
+    let result = sqlx::query(
         r#"
-        UPDATE clientes SET saldo = $1 WHERE id = $2
+        UPDATE clientes 
+        SET saldo = saldo + $1 
+        WHERE id = $2 
+        AND (saldo + $1 >= -limite);
         "#,
     )
     .bind(saldo)
     .bind(id)
     .execute(conn.get_ref())
-    .await;
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(sqlx::Error::RowNotFound); // or any other appropriate error
+    }
+
+    let (limite, saldo) =
+        sqlx::query_as::<_, (i32, i32)>("SELECT limite, saldo FROM clientes WHERE id = $1")
+            .bind(id)
+            .fetch_one(conn.get_ref())
+            .await?;
+
+    Ok((limite, saldo))
 }
 
 pub async fn get_transacoes(conn: &State<PgPool>, id: i32) -> Result<Vec<Transacao>, sqlx::Error> {
     let transacoes = sqlx::query_as::<_, Transacao>(
         r#"
-        SELECT tipo, descricao, valor, realizada_em FROM transacoes WHERE cliente_id = $1
+        SELECT tipo, descricao, valor, realizada_em FROM transacoes WHERE cliente_id = $1 ORDER BY realizada_em DESC LIMIT 10
         "#,
     )
     .bind(id)

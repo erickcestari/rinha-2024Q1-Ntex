@@ -5,22 +5,23 @@ services:
     build: .
     hostname: api01
     environment:
-      - DATABASE_URL=postgres://admin:123456@db:5432/rinhabackenddb
-    ports:
-      - "3001:8000"
+      - DATABASE_URL=postgres://admin:123456@localhost:5432/rinhabackenddb
+      - PORT=8000
+    network_mode: host
     depends_on:
       - db
     deploy:
       resources:
         limits:
-          cpus: "0.15"
-          memory: "50mb"
+          cpus: "0.30"
+          memory: "50MB"
 
   api02:
     <<: *api
+    environment:
+      - DATABASE_URL=postgres://admin:123456@localhost:5432/rinhabackenddb
+      - PORT=8001
     hostname: api02
-    ports:
-      - "3002:8000"
 
   nginx:
     image: nginx:latest
@@ -29,25 +30,28 @@ services:
     depends_on:
       - api01
       - api02
-    ports:
-      - "9999:9999"
+    network_mode: host
     deploy:
       resources:
         limits:
-          cpus: "0.2"
-          memory: "20mb"
+          cpus: "0.15"
+          memory: "10MB"
 
   db:
     image: postgres:latest
     hostname: db
+    network_mode: host
     environment:
       - POSTGRES_PASSWORD=123456
       - POSTGRES_USER=admin
       - POSTGRES_DB=rinhabackenddb
-    ports:
-      - "5432:5432"
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: "440MB"
 
 networks:
   default:

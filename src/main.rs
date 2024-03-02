@@ -14,6 +14,10 @@ pub type PgPool = Pool<Postgres>;
 #[ntex::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
+    let port_str = env::var("PORT").expect("PORT must be set");
+    let port: u16 = port_str
+        .parse()
+        .expect("Failed to parse PORT string to integer");
 
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let pool = PgPoolOptions::new()
@@ -30,7 +34,7 @@ async fn main() -> std::io::Result<()> {
     };
 
     web::HttpServer::new(app_factory)
-        .bind(("0.0.0.0", 8000))?
+        .bind(("localhost", port))?
         .run()
         .await
 }

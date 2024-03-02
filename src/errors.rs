@@ -14,6 +14,9 @@ pub enum HttpError {
 
     #[display("Unprocessable Entity")]
     UnprocessableEntity,
+
+    #[display("Not Found")]
+    NotFound,
 }
 
 impl web::error::WebResponseError for HttpError {
@@ -29,6 +32,7 @@ impl web::error::WebResponseError for HttpError {
             HttpError::BadClientData => http::StatusCode::BAD_REQUEST,
             HttpError::Timeout => http::StatusCode::GATEWAY_TIMEOUT,
             HttpError::UnprocessableEntity => http::StatusCode::UNPROCESSABLE_ENTITY,
+            HttpError::NotFound => http::StatusCode::NOT_FOUND,
         }
     }
 }

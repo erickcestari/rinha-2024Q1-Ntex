@@ -17,7 +17,7 @@ pub async fn get_extrato(
     let current_date = Local::now().naive_local();
 
     if cliente_id <= 0 || cliente_id > 5 {
-        return Err(HttpError::BadClientData.into());
+        return Err(HttpError::NotFound.into());
     }
 
     let cliente = get_cliente(&pool, cliente_id)
@@ -51,23 +51,17 @@ pub async fn create_transaction(
     let current_date = Local::now().naive_local();
 
     if cliente_id <= 0 || cliente_id > 5 {
-        return Err(HttpError::BadClientData.into());
+        return Err(HttpError::NotFound.into());
     }
 
-    let cliente = get_cliente(&pool, cliente_id)
-        .await
-        .expect("Erro ao pegar as informações do cliente");
+    if transacao.descricao.len() > 10 || transacao.descricao.is_empty() || transacao.valor < 1 {
+        return Err(HttpError::UnprocessableEntity.into());
+    }
 
-    let saldo = match transacao.tipo {
-        'd' => {
-            let result = cliente.saldo - transacao.valor;
-            if result < -cliente.limite {
-                return Err(HttpError::UnprocessableEntity.into());
-            }
-            result
-        }
-        'c' => cliente.saldo + transacao.valor,
-        _ => return Err(HttpError::BadClientData.into()),
+    let transacao_valor = match transacao.tipo {
+        'd' => -transacao.valor,
+        'c' => transacao.valor,
+        _ => return Err(HttpError::UnprocessableEntity.into()),
     };
 
     let new_transacao = NewTransacao {
@@ -78,16 +72,14 @@ pub async fn create_transaction(
         valor: transacao.valor,
     };
 
-    if let Err(_) = insere_transacao(&pool, new_transacao).await {
-        return Err(HttpError::BadClientData.into());
-    }
-
-    update_cliente_saldo(&pool, cliente_id, saldo).await;
-
-    let udpated_client = UpdatedClient {
-        limite: cliente.limite,
-        saldo,
+    let (limite, saldo) = match update_cliente_saldo(&pool, cliente_id, transacao_valor).await {
+        Ok((limite, saldo)) => (limite, saldo),
+        Err(_) => return Err(HttpError::UnprocessableEntity.into()),
     };
 
-    Ok(web::HttpResponse::Ok().json(&udpated_client))
+    if let Err(_) = insere_transacao(&pool, new_transacao).await {
+        return Err(HttpError::UnprocessableEntity.into());
+    }
+
+    Ok(web::HttpResponse::Ok().json(&UpdatedClient { limite, saldo }))
 }
